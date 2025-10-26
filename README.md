@@ -1,4 +1,5 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 # LoRaBLE Encrypted Messenger
 
 > Secure Offline Long-Range Messaging with BLE + LoRa + RSA Encryption
@@ -136,6 +137,8 @@ Expected LCD output: ✅ **BLE+LoRa Ready**
 - Delivery status & MAC authentication ✅
 
 =======
+=======
+>>>>>>> Stashed changes
 # DOM - BLE Messaging App
 
 DOM is a simple Android application demonstrating Bluetooth Low Energy (BLE) communication. It allows users to scan for nearby BLE devices, establish a connection, and send text-based messages.
@@ -176,4 +179,7 @@ This is a standard Android Studio project. To build it:
 2.  Open the project in Android Studio.
 3.  Let Gradle sync the dependencies.
 4.  Build and run the application on an Android device.
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes

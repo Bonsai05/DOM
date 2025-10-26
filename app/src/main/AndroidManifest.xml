@@ -34,7 +34,11 @@
         android:theme="@style/Theme.DOM">
         <activity
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             android:name=".LauncherActivity"
+=======
+            android:name=".MainActivity"
+>>>>>>> Stashed changes
 =======
             android:name=".MainActivity"
 >>>>>>> Stashed changes
