@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase;
 // 'entities' lists all the table classes.
 // 'version' is for database migrations; start with 1.
 // FIX 1: The version number is increased from 1 to 2
-@Database(entities = {Message.class, Contact.class}, version = 6, exportSchema = false)
+@Database(entities = {Message.class, Contact.class}, version = 8, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     // An abstract method for Room to provide an instance of our DAO.
