@@ -13,11 +13,14 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<<<<<<< Updated upstream
     
     <!-- Additional permissions for better BLE compatibility -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" 
         android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+=======
+>>>>>>> Stashed changes
 
     <uses-feature
         android:name="android.hardware.bluetooth_le"
@@ -35,7 +38,11 @@
         <activity
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             android:name=".LauncherActivity"
+=======
+            android:name=".MainActivity"
+>>>>>>> Stashed changes
 =======
             android:name=".MainActivity"
 >>>>>>> Stashed changes
