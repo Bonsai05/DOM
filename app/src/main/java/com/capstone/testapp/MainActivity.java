@@ -1,147 +1,236 @@
 package com.capstone.testapp;
 
-import android.content.Intent;
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.os.Handler;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.app.ActivityCompat;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.journeyapps.barcodescanner.ScanContract;
-import com.journeyapps.barcodescanner.ScanOptions;
-
-import org.json.JSONObject; // Add this import for JSON
-
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    // UI Elements
-    private RecyclerView contactsRecyclerView;
-    private FloatingActionButton addContactFab;
-    private ContactAdapter contactAdapter;
-    private List<Contact> contactList;
+    private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
+    private static final long SCAN_PERIOD = 10000; // Stop scanning after 10 seconds
 
-    // Database
-    private AppDatabase db;
-    private ContactDao contactDao;
-    private ExecutorService executorService;
+    // --- SERVICE AND CHARACTERISTIC UUIDS ---
+    private static final UUID SERVICE_UUID = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb");
+    private static final UUID MESSAGE_CHARACTERISTIC_UUID = UUID.fromString("00002A37-0000-1000-8000-00805f9b34fb");
 
-    // The launcher now expects to receive JSON data from the QR code
-    private final ActivityResultLauncher<ScanOptions> barcodeLauncher = registerForActivityResult(new ScanContract(),
-            result -> {
-                if (result.getContents() == null) {
-                    Toast.makeText(MainActivity.this, "Cancelled", Toast.LENGTH_LONG).show();
+    private BluetoothAdapter bluetoothAdapter;
+    private BluetoothLeScanner bluetoothLeScanner;
+    private BluetoothGatt bluetoothGatt;
+    private BluetoothGattCharacteristic messageCharacteristic;
+    private Handler scanHandler;
+
+    private Button scanButton;
+    private ListView deviceListView;
+    private EditText messageEditText;
+    private Button sendButton;
+    private ProgressBar scanProgressBar;
+    private TextView statusTextView;
+
+    private final List<BluetoothDevice> discoveredDevices = new ArrayList<>();
+    private ArrayAdapter<String> deviceListAdapter;
+
+    private final ScanCallback scanCallback = new ScanCallback() {
+        @SuppressLint("MissingPermission")
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+            BluetoothDevice device = result.getDevice();
+            if (device.getName() != null && !discoveredDevices.contains(device)) {
+                discoveredDevices.add(device);
+                deviceListAdapter.add(device.getName() + "\n" + device.getAddress());
+                deviceListAdapter.notifyDataSetChanged();
+            }
+        }
+    };
+
+    private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+        @SuppressLint("MissingPermission")
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                runOnUiThread(() -> {
+                    statusTextView.setText("Status: Connected");
+                    Toast.makeText(MainActivity.this, "Connected", Toast.LENGTH_SHORT).show();
+                });
+                gatt.discoverServices();
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                runOnUiThread(() -> {
+                    statusTextView.setText("Status: Disconnected");
+                    sendButton.setEnabled(false);
+                    Toast.makeText(MainActivity.this, "Disconnected", Toast.LENGTH_SHORT).show();
+                });
+            }
+        }
+
+        @SuppressLint("MissingPermission")
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                BluetoothGattService service = gatt.getService(SERVICE_UUID);
+                if (service != null) {
+                    messageCharacteristic = service.getCharacteristic(MESSAGE_CHARACTERISTIC_UUID);
+                    if (messageCharacteristic != null) {
+                        runOnUiThread(() -> sendButton.setEnabled(true));
+                    } else {
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Message characteristic not found", Toast.LENGTH_SHORT).show());
+                    }
                 } else {
-                    String qrCodeData = result.getContents(); // This is a JSON string
-                    saveNewContact(qrCodeData);
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Service not found", Toast.LENGTH_SHORT).show());
                 }
-            });
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        scanButton = findViewById(R.id.scanButton);
+        deviceListView = findViewById(R.id.deviceListView);
+        messageEditText = findViewById(R.id.messageEditText);
+        sendButton = findViewById(R.id.sendButton);
+        scanProgressBar = findViewById(R.id.scanProgressBar);
+        statusTextView = findViewById(R.id.statusTextView);
 
-        addContactFab = findViewById(R.id.addContactFab);
-        contactsRecyclerView = findViewById(R.id.contactsRecyclerView);
-        db = AppDatabase.getDatabase(this);
-        contactDao = db.contactDao();
-        executorService = Executors.newSingleThreadExecutor();
+        deviceListAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>());
+        deviceListView.setAdapter(deviceListAdapter);
 
-        contactList = new ArrayList<>();
+        final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        bluetoothAdapter = bluetoothManager.getAdapter();
+        scanHandler = new Handler();
 
-        // --- UPDATED: The click listener now also sends the public key ---
-        contactAdapter = new ContactAdapter(contactList, contact -> {
-            Intent intent = new Intent(MainActivity.this, ChatActivity.class);
-            intent.putExtra("CONTACT_NAME", contact.name);
-            intent.putExtra("CONTACT_PUBLIC_KEY", contact.publicKey); // Add this line
-            startActivity(intent);
+        scanButton.setOnClickListener(v -> checkPermissionsAndScan());
+
+        deviceListView.setOnItemClickListener((parent, view, position, id) -> {
+            BluetoothDevice selectedDevice = discoveredDevices.get(position);
+            connectToDevice(selectedDevice);
         });
 
-        contactsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        contactsRecyclerView.setAdapter(contactAdapter);
+        sendButton.setOnClickListener(v -> sendMessage());
 
-        loadContacts();
-
-        addContactFab.setOnClickListener(v -> {
-            launchScanner();
-        });
-    }
-
-    private void launchScanner() {
-        ScanOptions options = new ScanOptions();
-        options.setPrompt("Scan a friend's QR code");
-        options.setBeepEnabled(true);
-        options.setOrientationLocked(true);
-        barcodeLauncher.launch(options);
-    }
-
-    private void loadContacts() {
-        executorService.execute(() -> {
-            List<Contact> loadedContacts = contactDao.getAllContacts();
-            runOnUiThread(() -> {
-                contactList.clear();
-                contactList.addAll(loadedContacts);
-                contactAdapter.notifyDataSetChanged();
-            });
-        });
-    }
-
-    // --- UPDATED: This method now parses JSON data ---
-    private void saveNewContact(String qrCodeData) {
-        try {
-            // Parse the JSON string from the QR code
-            JSONObject json = new JSONObject(qrCodeData);
-            String name = json.getString("name");
-            String publicKey = json.getString("publicKey");
-
-            executorService.execute(() -> {
-                // Save both name and public key using the updated constructor
-                Contact newContact = new Contact(name, publicKey);
-                contactDao.insert(newContact);
-
-                runOnUiThread(this::loadContacts);
-                runOnUiThread(() -> {
-                    Toast.makeText(MainActivity.this, "Contact '" + name + "' saved!", Toast.LENGTH_SHORT).show();
-                });
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Invalid QR Code", Toast.LENGTH_SHORT).show();
+        if (bluetoothAdapter == null) {
+            Toast.makeText(this, "Bluetooth is not supported", Toast.LENGTH_LONG).show();
+            finish();
         }
     }
 
-    // --- Menu Methods ---
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
+    private void checkPermissionsAndScan() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED ||
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT}, REQUEST_BLUETOOTH_PERMISSIONS);
+            } else {
+                startScan();
+            }
+        } else {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_BLUETOOTH_PERMISSIONS);
+            } else {
+                startScan();
+            }
+        }
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int itemId = item.getItemId();
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_BLUETOOTH_PERMISSIONS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startScan();
+            } else {
+                Toast.makeText(this, "Permissions are required for scanning.", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
 
-        if (itemId == R.id.menu_my_profile) {
-            Intent intent = new Intent(this, MyProfileActivity.class);
-            startActivity(intent);
-            return true;
+    @SuppressLint("MissingPermission")
+    private void startScan() {
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
+            Toast.makeText(this, "Please enable Bluetooth", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        return super.onOptionsItemSelected(item);
+        if (bluetoothLeScanner == null) {
+            bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
+        }
+
+        statusTextView.setText("Status: Scanning...");
+        scanProgressBar.setVisibility(View.VISIBLE);
+        scanButton.setEnabled(false);
+        discoveredDevices.clear();
+        deviceListAdapter.clear();
+        deviceListAdapter.notifyDataSetChanged();
+
+        scanHandler.postDelayed(() -> {
+            bluetoothLeScanner.stopScan(scanCallback);
+            scanProgressBar.setVisibility(View.GONE);
+            scanButton.setEnabled(true);
+            statusTextView.setText("Status: Disconnected");
+        }, SCAN_PERIOD);
+
+        bluetoothLeScanner.startScan(scanCallback);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void connectToDevice(BluetoothDevice device) {
+        statusTextView.setText("Status: Connecting...");
+        if (bluetoothLeScanner != null) {
+            bluetoothLeScanner.stopScan(scanCallback);
+        }
+        scanProgressBar.setVisibility(View.GONE);
+        scanButton.setEnabled(true);
+        bluetoothGatt = device.connectGatt(this, false, gattCallback);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void sendMessage() {
+        if (bluetoothGatt != null && messageCharacteristic != null) {
+            String message = messageEditText.getText().toString();
+            if (message.isEmpty()) {
+                Toast.makeText(this, "Cannot send empty message", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                bluetoothGatt.writeCharacteristic(messageCharacteristic, messageBytes, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+            } else {
+                messageCharacteristic.setValue(messageBytes);
+                bluetoothGatt.writeCharacteristic(messageCharacteristic);
+            }
+            messageEditText.setText(""); // Clear the message box
+        }
     }
 }

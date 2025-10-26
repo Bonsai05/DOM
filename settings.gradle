@@ -1,14 +1,9 @@
 pluginManagement {
     repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
+        google()
         mavenCentral()
         gradlePluginPortal()
+        maven { url 'https://www.jitpack.io' }
     }
 }
 dependencyResolutionManagement {
@@ -16,8 +11,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://www.jitpack.io' }
     }
 }
 
-rootProject.name = "testapp"
+rootProject.name = "DOM"
 include ':app'

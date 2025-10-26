@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 package com.capstone.testapp;
 
 import android.Manifest;
@@ -407,3 +408,5 @@ public class ChatActivity extends AppCompatActivity {
     }
 }
 
+=======
+>>>>>>> Stashed changes
