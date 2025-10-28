@@ -10,7 +10,6 @@ constraintlayout = "2.1.4"
 room = "2.6.1"
 zxing = "4.3.0"
 lifecycle = "2.6.2"
-kotlinx-metadata-jvm = "0.6.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -25,7 +24,6 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 zxing-embedded = { group = "com.journeyapps", name = "zxing-android-embedded", version.ref = "zxing" }
 lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
 lifecycle-livedata = { group = "androidx.lifecycle", name = "lifecycle-livedata", version.ref = "lifecycle" }
-kotlinx-metadata-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-metadata-jvm", version.ref = "kotlinx-metadata-jvm" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

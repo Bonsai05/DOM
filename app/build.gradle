@@ -37,8 +37,5 @@ dependencies {
 
     implementation libs.lifecycle.viewmodel
     implementation libs.lifecycle.livedata
-
-    // Fix for kotlinx-metadata-jvm version conflict
-    implementation libs.kotlinx.metadata.jvm
 }
 

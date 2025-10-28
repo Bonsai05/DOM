@@ -1,17 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingVertical="4dp"
-    android:paddingHorizontal="8dp">
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
 
     <TextView
         android:id="@+id/messageTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:background="@drawable/bg_bubble_received"
         android:padding="12dp"
-        android:text="This is a sample message"
-        android:textColor="@android:color/black"
-        android:textSize="16sp" />
+        android:textColor="?attr/colorOnSurface"
+        tools:text="This is a received message." />
 
-</RelativeLayout>
+    <TextView
+        android:id="@+id/statusTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:textSize="12sp"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        tools:text="Sent" />
+
+</LinearLayout>
