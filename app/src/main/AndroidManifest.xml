@@ -29,7 +29,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".DeviceScanActivity" />
-        <activity android:name=".ChatActivity" />
+        <activity
+            android:name=".ChatActivity"
+            android:windowSoftInputMode="adjustPan" />
     </application>
 
 </manifest>

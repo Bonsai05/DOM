@@ -4,7 +4,11 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothProfile;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.view.View;
+import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -21,6 +25,8 @@ public class ChatActivity extends AppCompatActivity implements BleManager.GattCa
     private MessageAdapter messageAdapter;
     private EditText messageEditText;
     private Button sendButton;
+    private RecyclerView recyclerView;
+    private LinearLayoutManager layoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +37,16 @@ public class ChatActivity extends AppCompatActivity implements BleManager.GattCa
         bleManager = new BleManager(this, null, this);
         bleManager.connect(device);
 
-        RecyclerView recyclerView = findViewById(R.id.chatRecyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        setupViews();
+        setupKeyboardHandling();
+    }
+
+    private void setupViews() {
+        recyclerView = findViewById(R.id.chatRecyclerView);
+        layoutManager = new LinearLayoutManager(this);
+        layoutManager.setStackFromEnd(true); // Start from bottom
+        recyclerView.setLayoutManager(layoutManager);
+
         messageAdapter = new MessageAdapter(new ArrayList<>());
         recyclerView.setAdapter(messageAdapter);
 
@@ -42,12 +56,48 @@ public class ChatActivity extends AppCompatActivity implements BleManager.GattCa
         sendButton.setEnabled(false); // Disable send button until services are discovered
     }
 
-    private void sendMessage() {
-        String message = messageEditText.getText().toString();
-        if (message.isEmpty()) return;
+    private void setupKeyboardHandling() {
+        final View rootView = findViewById(android.R.id.content);
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                Rect r = new Rect();
+                rootView.getWindowVisibleDisplayFrame(r);
+                int screenHeight = rootView.getRootView().getHeight();
+                int keypadHeight = screenHeight - r.bottom;
 
-        bleManager.sendMessage(message);
-        messageAdapter.addMessage("Me: " + message);
+                if (keypadHeight > screenHeight * 0.15) { // Keyboard is opened
+                    // Scroll to bottom when keyboard opens
+                    if (messageAdapter.getItemCount() > 0) {
+                        recyclerView.post(() -> recyclerView.smoothScrollToPosition(messageAdapter.getItemCount() - 1));
+                    }
+                }
+            }
+        });
+
+        // Auto-scroll when new messages are added
+        messageAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                recyclerView.post(() -> {
+                    if (layoutManager.findLastCompletelyVisibleItemPosition() >= positionStart - 1) {
+                        recyclerView.smoothScrollToPosition(positionStart + itemCount - 1);
+                    }
+                });
+            }
+        });
+    }
+
+    private void sendMessage() {
+        String messageText = messageEditText.getText().toString().trim();
+        if (messageText.isEmpty()) return;
+
+        // Create and add sent message
+        Message sentMessage = new Message(messageText, System.currentTimeMillis(), true);
+        messageAdapter.addMessage(sentMessage);
+
+        // Send via BLE
+        bleManager.sendMessage(messageText);
         messageEditText.setText("");
     }
 
@@ -84,7 +134,9 @@ public class ChatActivity extends AppCompatActivity implements BleManager.GattCa
     @Override
     public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
         runOnUiThread(() -> {
-            messageAdapter.addMessage("Node: " + new String(characteristic.getValue()));
+            String receivedText = new String(characteristic.getValue());
+            Message receivedMessage = new Message(receivedText, System.currentTimeMillis(), false);
+            messageAdapter.addMessage(receivedMessage);
         });
     }
 }

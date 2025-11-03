@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Main chat bubble -->
+    <path
+        android:pathData="M6,7.5c0,-1.933 1.567,-3.5 3.5,-3.5h6.5c1.933,0 3.5,1.567 3.5,3.5v5c0,1.933 -1.567,3.5 -3.5,3.5h-1.5l-1.75,2.625 -1.75,-2.625h-1.5c-1.933,0 -3.5,-1.567 -3.5,-3.5z"
+        android:fillColor="#4a8cf7" />
+
+    <!-- Gradient overlay -->
+    <path android:pathData="M6,7.5c0,-1.933 1.567,-3.5 3.5,-3.5h6.5c1.933,0 3.5,1.567 3.5,3.5v5c0,1.933 -1.567,3.5 -3.5,3.5h-1.5l-1.75,2.625 -1.75,-2.625h-1.5c-1.933,0 -3.5,-1.567 -3.5,-3.5z">
+        <aapt:attr name="android:fillColor"
+            xmlns:aapt="http://schemas.android.com/aapt">
+            <gradient
+                android:type="linear"
+                android:startX="6"
+                android:startY="4"
+                android:endX="20"
+                android:endY="16"
+                android:startColor="#e8f0ff"
+                android:centerColor="#9dc3f7"
+                android:endColor="#4a8cf7" />
+        </aapt:attr>
+    </path>
+
+    <!-- Subtle highlight -->
+    <path
+        android:pathData="M9.5,4c1.933,0 3.5,1.567 3.5,3.5v3.5c0,0.966 -0.784,1.75 -1.75,1.75h-5.25c-0.966,0 -1.75,-0.784 -1.75,-1.75v-3.5c0,-1.933 1.567,-3.5 3.5,-3.5h1.75z"
+        android:fillColor="#ffffff"
+        android:fillAlpha="0.15" />
+
+</vector>
