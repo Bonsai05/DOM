@@ -1,8 +1,41 @@
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-# LoRaBLE Encrypted Messenger
+# DOM - BLE Messaging App
 
-> Secure Offline Long-Range Messaging with BLE + LoRa + RSA Encryption
+DOM is a simple Android application demonstrating Bluetooth Low Energy (BLE) communication. It allows users to scan for nearby BLE devices, establish a connection, and send text-based messages.
+
+This project serves as a clear, straightforward example of using Android's native BLE APIs for basic data transfer.
+
+## Features
+
+- **BLE Device Scanning:** Scan for nearby BLE peripherals.
+- **Device Connection:** Establish a connection with a selected device from the scan results.
+- **Simple Messaging:** Send text messages to the connected device.
+- **Modern UI:** Built with modern Material 3 components and a clean, user-friendly interface.
+- **Runtime Permissions:** Correctly handles all necessary runtime permissions for Bluetooth functionality on modern Android versions.
+
+## How to Use
+
+1.  **Launch the App:** Open the DOM application.
+2.  **Start the Process:** Tap the **"Start BLE Chat"** button.
+3.  **Scan for Devices:** On the scan screen, tap the **"Scan for Devices"** button.
+4.  **Grant Permissions:** If prompted, grant the necessary Bluetooth and Location permissions.
+5.  **Connect to a Device:** A list of nearby devices will appear. Tap on a device to connect to it.
+6.  **Chat:** You will be automatically taken to the chat screen. Once the "Services discovered" toast appears, you can send and receive messages.
+
+## Building the Project
+
+This is a standard Android Studio project with no external BLE dependencies.
+
+1.  Clone the repository.
+2.  Open the project in Android Studio.
+3.  Let Gradle sync the project.
+4.  Build and run the application on an Android device.
+
+=======
+=======
+
+# Decentralized Off Grid Messenger
+
+> Secure Offline Long-Range Messaging with BLE + LoRa 
 
 ---
 
@@ -18,33 +51,28 @@ LoRaBLE Messenger is an **end-to-end encrypted**, **offline messaging system** t
 
 - **Bluetooth Low Energy (BLE)** for phone ↔ hardware communication  
 - **LoRa (Long Range Radio)** for long‑distance transmission  
-- **RSA encryption** for secure key‑based messaging  
 
 This project was built as a **B.Tech CSE capstone** demonstrating skills in:  
-Android Development • Embedded Systems • Wireless Protocols • Cryptography
+Android Development • Embedded Systems • Wireless Protocols 
 
 ---
 
 ## 🧠 System Architecture
 
 
-1️⃣ Encrypt message with receiver’s **public key**  
-2️⃣ Send over **BLE** to nearest node  
-3️⃣ **LoRa radio** forwards encrypted packet  
-4️⃣ Target node relays via **BLE**  
-5️⃣ Receiver decrypts via **private key**  
+1️⃣ Send message over **BLE** to nearest node   
+2️⃣ **LoRa radio** forwards packet   
+3️⃣ Target node relays via **BLE** 
 
 ---
 
 ## ✅ Key Features
 | Feature | Description |
 |--------|-------------|
-| 🔐 End‑to‑End Encryption | RSA Keypair secured messaging |
 | 📡 Hardware‑extended Range | ESP32 + LoRa nodes |
 | 🔄 BLE Relay | Low power short‑range communication |
 | 📱 Local Chat Storage | Android Room database |
-| 🔍 QR Secure Contact Sharing | Exchanges key + username |
-| 🖥️ Node Status Display | LCD feedback for connection states |
+| LCD feedback for connection states |
 
 ---
 
@@ -54,9 +82,7 @@ Android Development • Embedded Systems • Wireless Protocols • Cryptography
 - Java + AndroidX
 - Material UI | RecyclerView | ConstraintLayout
 - BLE: `BluetoothLeScanner`
-- Crypto: Java Cryptography API (RSA)
 - Persistence: **Room DB**
-- QR: ZXing (zxing‑android‑embedded)
 - Gradle build system
 
 ### 📡 ESP32 Hardware Firmware
@@ -105,11 +131,6 @@ Expected LCD output: ✅ **BLE+LoRa Ready**
 
 ## 💬 Usage Guide
 
-### 🔗 Add Contacts
-- Phone A → Menu → **My Profile** → Show QR  
-- Phone B → **Scan QR** (+ button)
-- Exchange both ways ✅
-
 ### 🗨️ Messaging
 - Enable **Bluetooth + Location**
 - Connect each phone to nearest LoRa Node  
@@ -123,7 +144,6 @@ Expected LCD output: ✅ **BLE+LoRa Ready**
 |----------|----------|
 | BLE Scan inconsistencies | Event‑based scanning & filtering |
 | LoRa packet loss | Structured packet format |
-| Asynchronous RSA | Thread‑based crypto handling |
 | DB migrations | Safe schema evolution |
 | Hardware reliability | Signal and power debugging |
 
@@ -133,44 +153,8 @@ Expected LCD output: ✅ **BLE+LoRa Ready**
 - Background notifications 🔔
 - LoRa mesh for multi‑hop ✅
 - Message buffering in nodes 🧳
-- Group messaging 👥
 - Delivery status & MAC authentication ✅
 
 =======
 =======
->>>>>>> Stashed changes
-# DOM - BLE Messaging App
 
-DOM is a simple Android application demonstrating Bluetooth Low Energy (BLE) communication. It allows users to scan for nearby BLE devices, establish a connection, and send text-based messages.
-
-This project serves as a clear, straightforward example of using Android's native BLE APIs for basic data transfer.
-
-## Features
-
-- **BLE Device Scanning:** Scan for nearby BLE peripherals.
-- **Device Connection:** Establish a connection with a selected device from the scan results.
-- **Simple Messaging:** Send text messages to the connected device.
-- **Modern UI:** Built with modern Material 3 components and a clean, user-friendly interface.
-- **Runtime Permissions:** Correctly handles all necessary runtime permissions for Bluetooth functionality on modern Android versions.
-
-## How to Use
-
-1.  **Launch the App:** Open the DOM application.
-2.  **Start the Process:** Tap the **"Start BLE Chat"** button.
-3.  **Scan for Devices:** On the scan screen, tap the **"Scan for Devices"** button.
-4.  **Grant Permissions:** If prompted, grant the necessary Bluetooth and Location permissions.
-5.  **Connect to a Device:** A list of nearby devices will appear. Tap on a device to connect to it.
-6.  **Chat:** You will be automatically taken to the chat screen. Once the "Services discovered" toast appears, you can send and receive messages.
-
-## Building the Project
-
-This is a standard Android Studio project with no external BLE dependencies.
-
-1.  Clone the repository.
-2.  Open the project in Android Studio.
-3.  Let Gradle sync the project.
-4.  Build and run the application on an Android device.
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
