@@ -4,18 +4,18 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothProfile;
-import android.graphics.Rect;
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
-import android.view.ViewTreeObserver;
-import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 import java.util.ArrayList;
 
@@ -23,10 +23,7 @@ public class ChatActivity extends AppCompatActivity implements BleManager.GattCa
 
     private BleManager bleManager;
     private MessageAdapter messageAdapter;
-    private EditText messageEditText;
-    private Button sendButton;
-    private RecyclerView recyclerView;
-    private LinearLayoutManager layoutManager;
+    private Button scanQrButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,67 +35,42 @@ public class ChatActivity extends AppCompatActivity implements BleManager.GattCa
         bleManager.connect(device);
 
         setupViews();
-        setupKeyboardHandling();
     }
 
     private void setupViews() {
-        recyclerView = findViewById(R.id.chatRecyclerView);
-        layoutManager = new LinearLayoutManager(this);
-        layoutManager.setStackFromEnd(true); // Start from bottom
+        RecyclerView recyclerView = findViewById(R.id.chatRecyclerView);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(layoutManager);
 
         messageAdapter = new MessageAdapter(new ArrayList<>());
         recyclerView.setAdapter(messageAdapter);
 
-        messageEditText = findViewById(R.id.messageEditText);
-        sendButton = findViewById(R.id.sendButton);
-        sendButton.setOnClickListener(v -> sendMessage());
-        sendButton.setEnabled(false); // Disable send button until services are discovered
+        scanQrButton = findViewById(R.id.scan_qr_button_chat);
+        scanQrButton.setOnClickListener(v -> {
+            new IntentIntegrator(this).initiateScan();
+        });
+        scanQrButton.setEnabled(false); // Disable until services are discovered
     }
 
-    private void setupKeyboardHandling() {
-        final View rootView = findViewById(android.R.id.content);
-        rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                Rect r = new Rect();
-                rootView.getWindowVisibleDisplayFrame(r);
-                int screenHeight = rootView.getRootView().getHeight();
-                int keypadHeight = screenHeight - r.bottom;
-
-                if (keypadHeight > screenHeight * 0.15) { // Keyboard is opened
-                    // Scroll to bottom when keyboard opens
-                    if (messageAdapter.getItemCount() > 0) {
-                        recyclerView.post(() -> recyclerView.smoothScrollToPosition(messageAdapter.getItemCount() - 1));
-                    }
-                }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result != null) {
+            if (result.getContents() == null) {
+                Toast.makeText(this, "Scan cancelled", Toast.LENGTH_LONG).show();
+            } else {
+                String scannedData = result.getContents();
+                // Display scanned data in chat
+                Message sentMessage = new Message(scannedData, System.currentTimeMillis(), true);
+                messageAdapter.addMessage(sentMessage);
+                // Send scanned data to the node
+                bleManager.sendMessage(scannedData);
             }
-        });
-
-        // Auto-scroll when new messages are added
-        messageAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onItemRangeInserted(int positionStart, int itemCount) {
-                recyclerView.post(() -> {
-                    if (layoutManager.findLastCompletelyVisibleItemPosition() >= positionStart - 1) {
-                        recyclerView.smoothScrollToPosition(positionStart + itemCount - 1);
-                    }
-                });
-            }
-        });
-    }
-
-    private void sendMessage() {
-        String messageText = messageEditText.getText().toString().trim();
-        if (messageText.isEmpty()) return;
-
-        // Create and add sent message
-        Message sentMessage = new Message(messageText, System.currentTimeMillis(), true);
-        messageAdapter.addMessage(sentMessage);
-
-        // Send via BLE
-        bleManager.sendMessage(messageText);
-        messageEditText.setText("");
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
@@ -115,7 +87,7 @@ public class ChatActivity extends AppCompatActivity implements BleManager.GattCa
                 Toast.makeText(this, "Connected. Discovering services...", Toast.LENGTH_SHORT).show();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Toast.makeText(this, "Disconnected", Toast.LENGTH_SHORT).show();
-                sendButton.setEnabled(false);
+                scanQrButton.setEnabled(false);
             }
         });
     }
@@ -124,8 +96,8 @@ public class ChatActivity extends AppCompatActivity implements BleManager.GattCa
     public void onServicesDiscovered(BluetoothGatt gatt, int status) {
         if (status == BluetoothGatt.GATT_SUCCESS) {
             runOnUiThread(() -> {
-                Toast.makeText(this, "Services discovered. Ready to send.", Toast.LENGTH_SHORT).show();
-                sendButton.setEnabled(true);
+                Toast.makeText(this, "Services discovered. Ready to scan.", Toast.LENGTH_SHORT).show();
+                scanQrButton.setEnabled(true);
                 bleManager.enableNotifications();
             });
         }

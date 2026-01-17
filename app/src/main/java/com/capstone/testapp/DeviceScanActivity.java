@@ -23,6 +23,7 @@ import java.util.List;
 public class DeviceScanActivity extends AppCompatActivity {
 
     public static final String EXTRA_DEVICE = "extra_device";
+    public static BluetoothDevice connectedDevice;
 
     private BleManager bleManager;
     private BleDeviceAdapter adapter;
@@ -55,6 +56,7 @@ public class DeviceScanActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new BleDeviceAdapter(new ArrayList<>(), (device) -> {
             bleManager.stopScan();
+            connectedDevice = device;
             final Intent resultIntent = new Intent(this, ChatActivity.class);
             resultIntent.putExtra(EXTRA_DEVICE, device);
             startActivity(resultIntent);
