@@ -155,8 +155,4 @@ Expected LCD output: ✅ **BLE+LoRa Ready**
 - Message buffering in nodes 🧳
 - Delivery status & MAC authentication ✅
 
-=======
-=======
-=======
-=======
 
